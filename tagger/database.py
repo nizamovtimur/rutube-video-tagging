@@ -54,7 +54,7 @@ def get_tags(
     encoder_model: SentenceTransformer,
     title: str,
     description: str,
-    video_path: str,
+    video_path: str | None = None,
 ):
     with Session(engine) as session:
         embedding = encoder_model.encode(title + " " + description)

@@ -2,6 +2,7 @@ fastapi
 numpy
 pandas
 python-dotenv
+python-multipart
 pgvector
 psycopg2-binary
 sentence_transformers

@@ -20,4 +20,4 @@ docker compose --env-file .env.docker up --build -d
 ## Используемые технологии
 * Docker, FastAPI, Swagger
 * PostgreSQL, Pgvector
-* Transformer, Sentence Transformer, Faster Whisper
+* Transformer, Sentence Transformer, Vision Transformer, Faster Whisper
