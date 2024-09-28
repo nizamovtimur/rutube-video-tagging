@@ -1,5 +1,6 @@
 import pathlib
 from fastapi import FastAPI, HTTPException, UploadFile
+from faster_whisper import WhisperModel
 from sentence_transformers import SentenceTransformer
 from sqlalchemy import create_engine
 import torch
@@ -12,6 +13,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 encoder_model = SentenceTransformer(
     "saved_models/multilingual-e5-large-videotags", device=device
 )
+audio_model = WhisperModel("medium", compute_type="int8", device=device)
 engine = create_engine(Config.SQLALCHEMY_DATABASE_URI)
 create_taxonomy(
     engine=engine, encoder_model=encoder_model, taxonomy_path="IAB_tags.csv"
@@ -31,6 +33,7 @@ async def predict_tokens(title: str, description, video: UploadFile):
     return get_tags(
         engine=engine,
         encoder_model=encoder_model,
+        audio_model=audio_model,
         title=title,
         description=description,
         video_path=f"data/{video.filename}",

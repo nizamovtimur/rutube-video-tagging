@@ -1,4 +1,5 @@
 fastapi
+faster-whisper
 numpy
 pandas
 python-dotenv
