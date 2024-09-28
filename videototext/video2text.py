@@ -64,7 +64,7 @@ def main(video_file_path):
     model, feature_extractor, tokenizer, device = load_model_and_processors()
 
     # Параметры генерации
-    max_length = 30
+    max_length = 24
     num_beams = 4
     gen_kwargs = {"max_length": max_length, "num_beams": num_beams}
 
