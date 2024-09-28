@@ -1,7 +1,6 @@
 pandas
 torch
 sentence_transformers
-tqdm
 numpy
 tabulate
 flask
