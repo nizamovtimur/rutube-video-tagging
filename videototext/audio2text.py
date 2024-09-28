@@ -1,38 +1,60 @@
 import os
 from faster_whisper import WhisperModel
+from faster_whisper.utils import download_model
 
-
-def transcribe_and_save(model: WhisperModel, video_path: str) -> None:
-    """Расшифровывает аудиофайлы и сохраняет текст в файлы.
+def transcribe(model: WhisperModel, video_path: str) -> str:
+    """Расшифровывает аудиоданные
 
     Args:
         model (WhisperModel): модель анализа аудио
         video_path (str): путь к файлу видео
+
+    Returns:
+        str: Строка с транскрибацией аудиоряда всего видео
     """
-    if filename.endswith(".mp4"):
-        segments_n, _ = model.transcribe(
-            audio=video_path, word_timestamps=False, condition_on_previous_text=False
-        )
+    segments_n, _ = model.transcribe(
+        audio=video_path,
+        word_timestamps=False,
+        condition_on_previous_text=False,
+        vad_filter=True
+    )
 
-        text = "".join(segment.text for segment in segments_n)
-        output_filename = os.path.splitext(filename)[0] + ".txt"
+    # Возвращаемая строка транскрибации
+    text = ''.join(segment.text for segment in segments_n)
 
-        with open(output_filename, "w", encoding="utf-8") as f:
-            f.write(text)
-        print(f"Расшифровка {filename} завершена. Текст сохранен в {output_filename}")
+    print(f"Расшифровка {video_path} завершена.")
+    return text
 
+def load_model(size_or_id: str) -> WhisperModel:
+    """Загружает модель из локального каталога или скачивает, если она отсутствует
 
-def main(video_path: str) -> None:
-    """Создание модели и вызов функции анализа аудио
+    Args:
+        size_or_id (str): название модели
+
+    Returns:
+        WhisperModel: Инициализированная модель
+    """
+    model_path = f"./{size_or_id}"
+
+    if not os.path.exists(model_path):
+        print(f"Модель не найдена. Загружаем модель {size_or_id}...")
+        download_model(size_or_id, output_dir=model_path, local_files_only=False)
+
+    print(f"Загрузка модели из {model_path}.")
+    model = WhisperModel(model_path, compute_type="int8", device="cuda")
+    return model
+
+def transcribe_video(video_path: str) -> str:
+    """Функция, реализующая speech-to-text recognition для видео
 
     Args:
         video_path (str): путь к файлу видео
+
+    Returns:
+        str: Строка с транскрибацией аудиоряда всего видео
     """
+    model_name = "small"
+    model = load_model(model_name)
 
-    model = WhisperModel("medium", compute_type="int8", device="cuda")
-    transcribe_and_save(model, video_path)
-
-
-if __name__ == "__main__":
-    filename = "/content/0a7a288165c6051ebd74010be4dc9aa8.mp4"
-    main(filename)
+    audio_text = transcribe(model, video_path)
+    return audio_text
