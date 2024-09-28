@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+    tagger:
+        build: ./tagger
+        image: rutube-video-tagging/tagger:latest
+        container_name: rutube-video-tagging-tagger
+        restart: unless-stopped
+        command: python api.py
+        env_file:
+            - .env.docker
+        ports:
+            - 8080:8080
