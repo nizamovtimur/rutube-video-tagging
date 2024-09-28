@@ -1,10 +1,9 @@
-pandas
-torch
-sentence_transformers
+fastapi
 numpy
-tabulate
-flask
+pandas
 python-dotenv
-psycopg2-binary
 pgvector
+psycopg2-binary
+sentence_transformers
 sqlalchemy
+uvicorn

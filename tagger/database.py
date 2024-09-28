@@ -1,11 +1,10 @@
-import numpy as np
 import pandas as pd
 from pgvector.sqlalchemy import Vector
 from sentence_transformers import SentenceTransformer
 from sqlalchemy import Text, create_engine, select, text, Engine
 from sqlalchemy.orm import Mapped, declarative_base, mapped_column, Session
 
-from config import app
+from config import Config
 
 Base = declarative_base()
 
@@ -23,16 +22,23 @@ def create_taxonomy(
 ):
     taxonomy = pd.read_csv(taxonomy_path)
     with Session(engine) as session:
-        session.query(Tag).delete()
+        if len(session.query(Tag).all()) > 0:
+            return
         tags_concate = []
         for i, row in taxonomy.iterrows():
-            if row["Уровень 3 (iab)"] is np.NaN:
-                if row["Уровень 2 (iab)"] is np.NaN:
+            if not isinstance(row["Уровень 3 (iab)"], str):
+                if not isinstance(row["Уровень 2 (iab)"], str):
+                    if not isinstance(row["Уровень 1 (iab)"], str):
+                        continue
                     tags_concate.append(row["Уровень 1 (iab)"].strip())
                 else:
-                    tags_concate.append(f"{row["Уровень 1 (iab)"].strip()}: {row["Уровень 2 (iab)"].strip()}")
+                    tags_concate.append(
+                        f"{row['Уровень 1 (iab)'].strip()}: {row['Уровень 2 (iab)'].strip()}"
+                    )
             else:
-                tags_concate.append(f"{row["Уровень 1 (iab)"].strip()}: {row["Уровень 2 (iab)"].strip()}: {row["Уровень 3 (iab)"].strip()}")
+                tags_concate.append(
+                    f"{row['Уровень 1 (iab)'].strip()}: {row['Уровень 2 (iab)'].strip()}: {row['Уровень 3 (iab)'].strip()}"
+                )
         for tag_title in tags_concate:
             session.add(
                 Tag(
@@ -49,19 +55,20 @@ def get_tags(
     title: str,
     description: str,
     video_path: str,
-) -> str:
+):
     with Session(engine) as session:
+        embedding = encoder_model.encode(title + " " + description)
         tags = session.scalars(
             select(Tag.title)
-            .order_by(Tag.embedding.cosine_distance(encoder_model.encode(title + " " + description)))
-            .limit(1)
+            .order_by(Tag.embedding.cosine_distance(embedding))
+            .limit(3)
         ).all()
-        return "['" + "', '".join(tags) + "']"
+        return tags
 
 
 if __name__ == "__main__":
     try:
-        engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
+        engine = create_engine(Config.SQLALCHEMY_DATABASE_URI)
         with Session(engine) as session:
             session.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
             session.commit()

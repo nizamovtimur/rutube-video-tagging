@@ -1,16 +1,10 @@
-import os
+from os import environ
+
 from dotenv import load_dotenv
-from flask import Flask
 
 load_dotenv("../.env")
 
-app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY")
 
-app.config["SQLALCHEMY_DATABASE_URI"] = (
-    f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST')}/{os.getenv('POSTGRES_DB')}"
-)
-
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["UPLOAD_FOLDER"] = "uploads"
-app.config["ALLOWED_EXTENSION"] = os.getenv("ALLOWED_EXTENSION")
+class Config:
+    SQLALCHEMY_DATABASE_URI = f"postgresql://{environ.get('POSTGRES_USER')}:{environ.get('POSTGRES_PASSWORD')}@{environ.get('POSTGRES_HOST')}/{environ.get('POSTGRES_DB')}"
+    SECRET_KEY = ("SECRET_KEY") or "secret"

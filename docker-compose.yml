@@ -23,11 +23,10 @@ services:
         image: rutube-video-tagging/tagger:latest
         container_name: rutube-video-tagging-tagger
         restart: unless-stopped
-        command: sh -c "python database.py && python main.py"
         env_file:
             - .env.docker
         ports:
-            - 8080:8080
+            - 80:8000
         depends_on:
             db:
                 condition: service_healthy
@@ -38,5 +37,6 @@ services:
                         - driver: nvidia
                           count: 1
                           capabilities: [gpu]
+
 volumes:
     db-data:
