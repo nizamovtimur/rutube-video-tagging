@@ -2,6 +2,11 @@ import cv2
 import torch
 from transformers import VisionEncoderDecoderModel, ViTImageProcessor, AutoTokenizer
 from PIL import Image
+import numpy as np
+
+def calculate_frame_step(x, a=6.64, b=0.01, c=130):
+    """Определить шаг между кадрами в зависимости от длины видео."""
+    return int(a * np.log(b * (x + c)))
 
 def load_model_and_processors():
     """Инициализировать модель."""
@@ -32,6 +37,10 @@ def analyze_video(video_path, model, feature_extractor, tokenizer, device, gen_k
     cap = cv2.VideoCapture(video_path)
     frame_count = 0
     descriptions = []
+    frame_step = 1
+
+    video_length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) / cap.get(cv2.CAP_PROP_FPS))
+    frame_step = calculate_frame_step(video_length)
 
     while cap.isOpened():
         ret, frame = cap.read()
@@ -41,7 +50,7 @@ def analyze_video(video_path, model, feature_extractor, tokenizer, device, gen_k
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         pil_image = Image.fromarray(frame)
 
-        if frame_count % 10 == 1:
+        if frame_count % frame_step == 1:
             description = predict_step(pil_image, model, feature_extractor, tokenizer, device, gen_kwargs)
             descriptions.append(description)
 
@@ -55,10 +64,11 @@ def main(video_file_path):
     model, feature_extractor, tokenizer, device = load_model_and_processors()
 
     # Параметры генерации
-    max_length = 24
+    max_length = 30
     num_beams = 4
     gen_kwargs = {"max_length": max_length, "num_beams": num_beams}
 
+    # Возвращаеммый набор описаний кадров
     video_descriptions = analyze_video(video_file_path, model, feature_extractor, tokenizer, device, gen_kwargs)
 
     for desc in video_descriptions:
