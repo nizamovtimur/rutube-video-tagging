@@ -4,7 +4,7 @@ from cv2 import (
     CAP_PROP_FRAME_COUNT,
     CAP_PROP_FPS,
     cvtColor,
-    COLOR_BGR2RGB
+    COLOR_BGR2RGB,
 )
 from torch import device as Device
 from torch.cuda import is_available
@@ -17,29 +17,33 @@ from transformers import (
 from PIL import Image
 from numpy import log
 
-MODEL_DIR = './vit-gpt2-image-captioning'
+MODEL_DIR = "./vit-gpt2-image-captioning"
 
 
-def calculate_frame_step(x: int, a: float=6.64, b: float=0.01, c: float=130) -> int:
-    """Определить шаг между кадрами в зависимости от длины видео
+def calculate_frame_step(
+    x: int, a: float = 6.64, b: float = 0.01, c: float = 130
+) -> int:
+    """Определяет шаг между кадрами в зависимости от длины видео.
 
     Args:
-        x (int): Длина видео в секундах
-        alpha (float, optional): Коэффициент масштабирования. По умолчанию 6.64
-        beta (float, optional): Коэффициент, влияющий на логарифмическое изменение. По умолчанию 0.01
-        offset (float, optional): Смещение, добавляемое к длине видео. По умолчанию 130
+        x (int): длина видео в секундах;
+        alpha (float, optional): коэффициент масштабирования. По умолчанию 6.64;
+        beta (float, optional): коэффициент, влияющий на логарифмическое изменение. По умолчанию 0.01;
+        offset (float, optional): смещение, добавляемое к длине видео. По умолчанию 130.
 
     Returns:
-        int: Шаг между кадрами
+        int: шаг между кадрами
     """
     return int(a * log(b * (x + c)))
 
 
-def load_model_and_processors() -> VisionEncoderDecoderModel|ViTImageProcessor|GPT2TokenizerFast|Device:
-    """Инициализирует модель для анализа видеоряда
+def load_model_and_processors() -> (
+    VisionEncoderDecoderModel | ViTImageProcessor | GPT2TokenizerFast | Device
+):
+    """Инициализирует модель для анализа видеоряда.
 
     Returns:
-        VisionEncoderDecoderModel|ViTImageProcessor|GPT2TokenizerFast|Device: модели для анализа видео
+        VisionEncoderDecoderModel|ViTImageProcessor|GPT2TokenizerFast|Device: модели для анализа видео.
     """
     if os.path.exists(MODEL_DIR):
         model = VisionEncoderDecoderModel.from_pretrained(MODEL_DIR)
@@ -48,13 +52,13 @@ def load_model_and_processors() -> VisionEncoderDecoderModel|ViTImageProcessor|G
     else:
         model = VisionEncoderDecoderModel.from_pretrained(
             "nlpconnect/vit-gpt2-image-captioning"
-            )
+        )
         feature_extractor = ViTImageProcessor.from_pretrained(
             "nlpconnect/vit-gpt2-image-captioning"
-            )
+        )
         tokenizer = AutoTokenizer.from_pretrained(
             "nlpconnect/vit-gpt2-image-captioning"
-            )
+        )
 
         model.save_pretrained(MODEL_DIR)
         feature_extractor.save_pretrained(MODEL_DIR)
@@ -74,15 +78,15 @@ def predict_step(
     device: Device,
     gen_kwargs: dict[str, int],
 ) -> str:
-    """Генерирует описание для текущего изображения при помощи модели
+    """Генерирует описание для текущего изображения при помощи модели.
 
     Args:
-        image (Image.Image): изображение для анализа
-        model (VisionEncoderDecoderModel): _description_
-        feature_extractor (ViTImageProcessor): _description_
-        tokenizer (GPT2TokenizerFast): _description_
-        device (Device): _description_
-        gen_kwargs (dict[str, int]): _description_
+        image (Image.Image): изображение для анализа;
+        model (VisionEncoderDecoderModel): модель создания покадровых описаний;
+        feature_extractor (ViTImageProcessor): модель анализа изображений;
+        tokenizer (GPT2TokenizerFast): модель, генерации аннотаций;
+        device (Device): устройство, производящее расчеты;
+        gen_kwargs (dict[str, int]): параметры, передаваемые в метод генерации.
 
     Returns:
         str: Текстовое описание текущего изображения
@@ -111,11 +115,11 @@ def analyze_video(
 
     Args:
         video_path (str): путь к файлу видео
-        model (VisionEncoderDecoderModel): _description_
-        feature_extractor (ViTImageProcessor): _description_
-        tokenizer (GPT2TokenizerFast): _description_
-        device (Device): _description_
-        gen_kwargs (dict[str, int]): _description_
+        model (VisionEncoderDecoderModel): модель создания покадровых описаний;
+        feature_extractor (ViTImageProcessor): модель анализа изображений;
+        tokenizer (GPT2TokenizerFast): модель генерации аннотаций;
+        device (Device): устройство, производящее расчеты;
+        gen_kwargs (dict[str, int]): параметры, передаваемые в метод генерации.
 
     Returns:
         list[str]: Список описаний проанализированных кадров
@@ -137,7 +141,9 @@ def analyze_video(
         pil_image = Image.fromarray(frame)
 
         if frame_count % frame_step == 1:
-            description = predict_step(pil_image, model, feature_extractor, tokenizer, device, gen_kwargs)
+            description = predict_step(
+                pil_image, model, feature_extractor, tokenizer, device, gen_kwargs
+            )
             descriptions.append(description)
 
         frame_count += 1
@@ -147,13 +153,13 @@ def analyze_video(
 
 
 def analyze_video_file(video_file_path: str):
-    """ Функция, управляющая анализом видеоряда
+    """Управляет анализом видеоряда.
 
     Args:
-        video_file_path (str): путь к файлу видео
+        video_file_path (str): путь к файлу видео;
 
     Returns:
-        list[str]: Список описаний проанализированных кадров
+        list[str]: список описаний проанализированных кадров.
     """
     model, feature_extractor, tokenizer, device = load_model_and_processors()
 
@@ -163,6 +169,8 @@ def analyze_video_file(video_file_path: str):
     gen_kwargs = {"max_length": max_length, "num_beams": num_beams}
 
     # Возвращаемый набор описаний кадров
-    video_descriptions = analyze_video(video_file_path, model, feature_extractor, tokenizer, device, gen_kwargs)
+    video_descriptions = analyze_video(
+        video_file_path, model, feature_extractor, tokenizer, device, gen_kwargs
+    )
 
     return video_descriptions
