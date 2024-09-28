@@ -12,3 +12,5 @@ app.config["SQLALCHEMY_DATABASE_URI"] = (
 )
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["UPLOAD_FOLDER"] = "uploads"
+app.config["ALLOWED_EXTENSION"] = os.getenv("ALLOWED_EXTENSION")

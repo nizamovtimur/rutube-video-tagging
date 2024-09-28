@@ -1,12 +1,36 @@
 version: '3.8'
 services:
+    db:
+        build: ./db
+        image: rutube-video-tagging/db:latest
+        container_name: rutube-video-tagging-db
+        restart: unless-stopped
+        environment:
+            - POSTGRES_DB=${POSTGRES_DB}
+            - POSTGRES_USER=${POSTGRES_USER}
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+        volumes:
+            - db-data:/var/lib/postgresql/data
+        healthcheck:
+            test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}"]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+            start_period: 20s
+            start_interval: 5s
+
     tagger:
         build: ./tagger
         image: rutube-video-tagging/tagger:latest
         container_name: rutube-video-tagging-tagger
         restart: unless-stopped
-        command: python api.py
+        command: python main.py
         env_file:
             - .env.docker
         ports:
             - 8080:8080
+        depends_on:
+            db:
+                condition: service_healthy
+volumes:
+    db-data:
