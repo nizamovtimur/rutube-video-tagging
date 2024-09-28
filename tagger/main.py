@@ -6,6 +6,7 @@ from sqlalchemy import create_engine
 import torch
 from config import Config
 from database import create_taxonomy, get_tags
+from video2text import load_model_and_processors
 
 
 app = FastAPI()
@@ -14,6 +15,9 @@ encoder_model = SentenceTransformer(
     "saved_models/multilingual-e5-large-videotags", device=device
 )
 audio_model = WhisperModel("medium", compute_type="int8", device=device)
+video_model, video_feature_extractor, video_tokenizer, video_device = (
+    load_model_and_processors(device=device)
+)
 engine = create_engine(Config.SQLALCHEMY_DATABASE_URI)
 create_taxonomy(
     engine=engine, encoder_model=encoder_model, taxonomy_path="IAB_tags.csv"
@@ -34,6 +38,10 @@ async def predict_tokens(title: str, description, video: UploadFile):
         engine=engine,
         encoder_model=encoder_model,
         audio_model=audio_model,
+        video_model=video_model,
+        video_feature_extractor=video_feature_extractor,
+        video_tokenizer=video_tokenizer,
+        video_device=video_device,
         title=title,
         description=description,
         video_path=f"data/{video.filename}",

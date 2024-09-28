@@ -1,7 +1,8 @@
 from sentence_transformers import SentenceTransformer
+from transformers import pipeline
 
-model_checkpoint = "nizamovtimur/multilingual-e5-large-videotags"
-save_path = "saved_models/multilingual-e5-large-videotags"
+st_model = SentenceTransformer("nizamovtimur/multilingual-e5-large-videotags")
+st_model.save("saved_models/multilingual-e5-large-videotags")
 
-model = SentenceTransformer(model_checkpoint)
-model.save(save_path)
+i2t_model = pipeline("image-to-text", model="nlpconnect/vit-gpt2-image-captioning")
+i2t_model.save_pretrained("saved_models/vit-gpt2-image-captioning")

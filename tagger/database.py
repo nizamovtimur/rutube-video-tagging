@@ -7,6 +7,7 @@ from sqlalchemy import Text, create_engine, select, text, Engine
 from sqlalchemy.orm import Mapped, declarative_base, mapped_column, Session
 
 from config import Config
+from video2text import analyze_video
 
 Base = declarative_base()
 
@@ -76,14 +77,35 @@ def get_tags(
     engine: Engine,
     encoder_model: SentenceTransformer,
     audio_model: WhisperModel,
+    video_model,
+    video_feature_extractor,
+    video_tokenizer,
+    video_device,
     title: str,
     description: str,
     video_path: str,
 ):
     audio_transcribition = transcribe_and_save(audio_model, video_path)
     audio_tokens = get_key_tokens(audio_transcribition)
+    frames_descriptions = analyze_video(
+        video_path,
+        video_model,
+        video_feature_extractor,
+        video_tokenizer,
+        video_device,
+        {"max_length": 24, "num_beams": 4},
+    )
+    video_description = "; ".join(frames_descriptions)
     with Session(engine) as session:
-        embedding = encoder_model.encode(title + " " + description + " " + audio_tokens)
+        embedding = encoder_model.encode(
+            title
+            + " "
+            + description
+            + "\n\n"
+            + audio_tokens
+            + "\n\n"
+            + video_description
+        )
         tags = session.scalars(
             select(Tag.title)
             .order_by(Tag.embedding.cosine_distance(embedding))

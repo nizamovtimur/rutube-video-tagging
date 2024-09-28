@@ -1,11 +1,13 @@
 fastapi
 faster-whisper
+multi-rake
 numpy
+opencv-python
 pandas
 python-dotenv
 python-multipart
 pgvector
 psycopg2-binary
-sentence_transformers
+sentence-transformers
 sqlalchemy
 uvicorn
