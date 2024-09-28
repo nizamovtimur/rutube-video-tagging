@@ -14,7 +14,7 @@ from sqlalchemy.orm import Mapped, declarative_base, mapped_column, Session
 taxonomy = pd.read_csv("IAB_tags.csv")
 device = "cuda" if torch.cuda.is_available() else "cpu"
 encoder_model = SentenceTransformer(
-    "saved_models/multilingual-e5-large-wikiutmn", device=device
+    "model_load/nizamovtimur/multilingual-e5-large-videotags", device=device
 )
 Base = declarative_base()
 
@@ -35,7 +35,6 @@ try:
     Base.metadata.create_all(engine)
 except Exception as e:
     print(e)
-    time.sleep(2)
 
 
 def title_tag(
