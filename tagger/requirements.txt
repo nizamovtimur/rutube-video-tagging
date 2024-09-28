@@ -1,0 +1,8 @@
+pandas
+sentence_transformers
+tqdm
+numpy
+faiss-cpu
+tabulate
+flask
+python-dotenv
