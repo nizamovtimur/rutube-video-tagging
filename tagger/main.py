@@ -6,7 +6,15 @@ import numpy as np
 import faiss
 
 
-def title_tag(title_text):
+def title_tag(title_text: str) -> str:
+    """Принимает название видео и подбирает по нему наиболее подходящий тег
+
+    Args:
+        title_text (str): название видео
+
+    Returns:
+        str: тег
+    """
     taxonomy = pd.read_csv("baseline/IAB_tags.csv")
 
     model = "cointegrated/rubert-tiny2"
