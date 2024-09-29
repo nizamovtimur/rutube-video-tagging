@@ -3,7 +3,7 @@ import torch
 from transformers import VisionEncoderDecoderModel, ViTImageProcessor, AutoTokenizer
 from PIL import Image
 import numpy as np
-
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 def calculate_frame_step(x, a=6.64, b=0.01, c=130):
     """Определяет шаг между кадрами в зависимости от длины видео.
@@ -64,7 +64,7 @@ def predict_step(image, model, feature_extractor, tokenizer, device, gen_kwargs)
     return preds[0].strip()
 
 
-def analyze_video(video_path, model, feature_extractor, tokenizer, device, gen_kwargs):
+def analyze_video(video_path: str, model, feature_extractor, tokenizer, device, gen_kwargs, max_workers=5):
     """Анализирует видео путём генерирования описания для выбранных кадров
 
     Args:
@@ -86,21 +86,33 @@ def analyze_video(video_path, model, feature_extractor, tokenizer, device, gen_k
     video_length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) / cap.get(cv2.CAP_PROP_FPS))
     frame_step = calculate_frame_step(video_length)
 
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if not ret:
-            break
+    images_batch = []
+    futures = []
 
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        pil_image = Image.fromarray(frame)
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
 
-        if frame_count % frame_step == 1:
-            description = predict_step(
-                pil_image, model, feature_extractor, tokenizer, device, gen_kwargs
-            )
-            descriptions.append(description)
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            pil_image = Image.fromarray(frame)
 
-        frame_count += 1
+            if frame_count % frame_step == 1:
+                images_batch.append(pil_image)
+
+            if len(images_batch) == max_workers:
+                futures.append(executor.submit(predict_step, images_batch, model, feature_extractor, tokenizer, device, gen_kwargs))
+                images_batch = []
+
+            frame_count += 1
+
+        # Обработка оставшихся изображений
+        if images_batch:
+            futures.append(executor.submit(predict_step, images_batch, model, feature_extractor, tokenizer, device, gen_kwargs))
+
+        for future in as_completed(futures):
+            descriptions.extend(future.result())
 
     cap.release()
     return descriptions
