@@ -12,10 +12,10 @@ docker compose --env-file .env.docker up --build -d
 ```
 
 ## Минимальные системные требования
-* CPU:
-* RAM:
-* GPU:
-* Disk Space:
+* CPU: 2 cores
+* RAM: 6 gb
+* VRAM: 6 gb
+* Disk Space: 80 gb
 
 ## Используемые технологии
 * Docker, FastAPI, Swagger
