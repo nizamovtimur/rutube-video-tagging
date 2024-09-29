@@ -1,3 +1,4 @@
+from typing import List
 from faster_whisper import WhisperModel
 from multi_rake import Rake
 import pandas as pd
@@ -73,6 +74,23 @@ def transcribe_and_save(model: WhisperModel, video_path: str) -> str:
     return "".join(segment.text for segment in segments_n)
 
 
+def remove_lower_tags(tags: List[str]) -> List[str]:
+    if len(tags) < 3:
+        return tags
+    final_tags = []
+    final_tags.append(tags[0])
+    if tags[1] not in tags[0] and tags[0] not in tags[1]:
+        final_tags.append(tags[1])
+    if (
+        tags[2] not in tags[0]
+        and tags[0] not in tags[2]
+        and tags[2] not in tags[1]
+        and tags[1] not in tags[2]
+    ):
+        final_tags.append(tags[2])
+    return final_tags
+
+
 def get_tags(
     engine: Engine,
     encoder_model: SentenceTransformer,
@@ -84,7 +102,7 @@ def get_tags(
     title: str,
     description: str,
     video_path: str,
-):
+) -> List[str]:
     # audio_transcribition = transcribe_and_save(audio_model, video_path)
     # audio_tokens = get_key_tokens(audio_transcribition)
     frames_descriptions = analyze_video(
@@ -111,7 +129,7 @@ def get_tags(
             .order_by(Tag.embedding.cosine_distance(embedding))
             .limit(3)
         ).all()
-        return tags
+        return remove_lower_tags(list(tags))
 
 
 if __name__ == "__main__":
