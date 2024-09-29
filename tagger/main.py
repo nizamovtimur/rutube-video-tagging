@@ -14,7 +14,8 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 encoder_model = SentenceTransformer(
     "saved_models/multilingual-e5-large-videotags", device=device
 )
-audio_model = WhisperModel("small", compute_type="int8", device=device)
+# TODO: move downloading to build stage
+# audio_model = WhisperModel("small", compute_type="int8", device=device)
 video_model, video_feature_extractor, video_tokenizer, video_device = (
     load_model_and_processors(device=device)
 )
@@ -26,7 +27,7 @@ create_taxonomy(
 
 @app.post("/predict_tokens")
 async def predict_tokens(title: str, description: str, video: UploadFile):
-    """Возвращает список тегов для заданноо видео, описания и названия.
+    """Возвращает список тегов для заданного видео, описания и названия.
 
     Args:
         title (str): название видео;
@@ -49,7 +50,7 @@ async def predict_tokens(title: str, description: str, video: UploadFile):
     return get_tags(
         engine=engine,
         encoder_model=encoder_model,
-        audio_model=audio_model,
+        # audio_model=audio_model,
         video_model=video_model,
         video_feature_extractor=video_feature_extractor,
         video_tokenizer=video_tokenizer,

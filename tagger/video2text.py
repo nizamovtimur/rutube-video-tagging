@@ -91,10 +91,10 @@ def analyze_video(video_path, model, feature_extractor, tokenizer, device, gen_k
         if not ret:
             break
 
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        pil_image = Image.fromarray(frame)
-
         if frame_count % frame_step == 1:
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            resized_image = cv2.resize(frame, (360, 360))
+            pil_image = Image.fromarray(resized_image)
             description = predict_step(
                 pil_image, model, feature_extractor, tokenizer, device, gen_kwargs
             )
