@@ -26,7 +26,19 @@ create_taxonomy(
 
 @app.post("/predict_tokens")
 async def predict_tokens(title: str, description, video: UploadFile):
+    """Возвращает список тегов для заданноо видео, описания и названия.
 
+    Args:
+        title (str): название видео;
+        description (_type_): описание видео;
+        video (UploadFile): видеофайл.
+
+    Raises:
+        HTTPException: возвращает код 400 при неверном формате видеофайла.
+
+    Returns:
+        list[str]: список тегов.
+    """
     if video.content_type != "video/mp4":
         raise HTTPException(400, detail="Invalid video type")
 

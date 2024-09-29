@@ -24,6 +24,13 @@ class Tag(Base):
 def create_taxonomy(
     engine: Engine, encoder_model: SentenceTransformer, taxonomy_path: str
 ):
+    """Загружает таксономию в модель данных.
+
+    Args:
+        engine (Engine): подключение к БД;
+        encoder_model (SentenceTransformer): модель трансформер;
+        taxonomy_path (str): путь к файлу таксономии.
+    """
     taxonomy = pd.read_csv(taxonomy_path)
     with Session(engine) as session:
         if len(session.query(Tag).all()) > 0:
@@ -67,7 +74,15 @@ def get_key_tokens(text: str) -> str:
 
 
 def transcribe_and_save(model: WhisperModel, video_path: str) -> str:
-    """Расшифровывает аудиофайлы и сохраняет текст в файлы."""
+    """Расшифровывает аудиофайлы и сохраняет текст в файлы.
+
+    Args:
+        model (WhisperModel): модель, обрабатывающая аудиопоток;
+        video_path (str): путь к видео.
+
+    Returns:
+        str: полный текст распознанного аудиоряда.
+    """
     segments_n, _ = model.transcribe(
         audio=video_path,
         word_timestamps=False,

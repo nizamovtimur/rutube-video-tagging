@@ -6,12 +6,26 @@ import numpy as np
 
 
 def calculate_frame_step(x, a=6.64, b=0.01, c=130):
-    """Определить шаг между кадрами в зависимости от длины видео."""
+    """Определяет шаг между кадрами в зависимости от длины видео.
+
+    Args:
+        x (int): длина видео в секундах;
+        alpha (float, optional): коэффициент масштабирования. По умолчанию 6.64;
+        beta (float, optional): коэффициент, влияющий на логарифмическое изменение. По умолчанию 0.01;
+        offset (float, optional): смещение, добавляемое к длине видео. По умолчанию 130.
+
+    Returns:
+        int: шаг между кадрами
+    """
     return int(a * np.log(b * (x + c)))
 
 
 def load_model_and_processors(device: str):
-    """Инициализировать модель."""
+    """Инициализирует модель для анализа видеоряда.
+
+    Returns:
+        VisionEncoderDecoderModel|ViTImageProcessor|GPT2TokenizerFast|Device: модели для анализа видео.
+    """
     model = VisionEncoderDecoderModel.from_pretrained(
         "saved_models/vit-gpt2-image-captioning"
     )
@@ -25,7 +39,19 @@ def load_model_and_processors(device: str):
 
 
 def predict_step(image, model, feature_extractor, tokenizer, device, gen_kwargs):
-    """Сгенерировать описание для данного изображения с помощью модели."""
+    """Генерирует описание для текущего изображения при помощи модели.
+
+    Args:
+        image (Image.Image): изображение для анализа;
+        model (VisionEncoderDecoderModel): модель создания покадровых описаний;
+        feature_extractor (ViTImageProcessor): модель анализа изображений;
+        tokenizer (GPT2TokenizerFast): модель, генерации аннотаций;
+        device (Device): устройство, производящее расчеты;
+        gen_kwargs (dict[str, int]): параметры, передаваемые в метод генерации.
+
+    Returns:
+        str: Текстовое описание текущего изображения
+    """
     if image.mode != "RGB":
         image = image.convert(mode="RGB")
 
@@ -39,7 +65,19 @@ def predict_step(image, model, feature_extractor, tokenizer, device, gen_kwargs)
 
 
 def analyze_video(video_path, model, feature_extractor, tokenizer, device, gen_kwargs):
-    """Анализировать видео и генерировать описания для выбранных кадров."""
+    """Анализирует видео путём генерирования описания для выбранных кадров
+
+    Args:
+        video_path (str): путь к файлу видео
+        model (VisionEncoderDecoderModel): модель создания покадровых описаний;
+        feature_extractor (ViTImageProcessor): модель анализа изображений;
+        tokenizer (GPT2TokenizerFast): модель генерации аннотаций;
+        device (Device): устройство, производящее расчеты;
+        gen_kwargs (dict[str, int]): параметры, передаваемые в метод генерации.
+
+    Returns:
+        list[str]: Список описаний проанализированных кадров
+    """
     cap = cv2.VideoCapture(video_path)
     frame_count = 0
     descriptions = []
