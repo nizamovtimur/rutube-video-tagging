@@ -69,7 +69,10 @@ def get_key_tokens(text: str) -> str:
 def transcribe_and_save(model: WhisperModel, video_path: str) -> str:
     """Расшифровывает аудиофайлы и сохраняет текст в файлы."""
     segments_n, _ = model.transcribe(
-        audio=video_path, word_timestamps=False, condition_on_previous_text=False
+        audio=video_path,
+        word_timestamps=False,
+        condition_on_previous_text=False,
+        vad_filter=True,
     )
     return "".join(segment.text for segment in segments_n)
 
@@ -103,8 +106,8 @@ def get_tags(
     description: str,
     video_path: str,
 ) -> List[str]:
-    # audio_transcribition = transcribe_and_save(audio_model, video_path)
-    # audio_tokens = get_key_tokens(audio_transcribition)
+    audio_transcribition = transcribe_and_save(audio_model, video_path)
+    audio_tokens = get_key_tokens(audio_transcribition)
     frames_descriptions = analyze_video(
         video_path,
         video_model,
@@ -120,7 +123,7 @@ def get_tags(
             + " "
             + description
             + "\n\n"
-            # + audio_tokens
+            + audio_tokens
             + "\n\n"
             + video_description
         )
