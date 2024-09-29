@@ -85,8 +85,8 @@ def get_tags(
     description: str,
     video_path: str,
 ):
-    audio_transcribition = transcribe_and_save(audio_model, video_path)
-    audio_tokens = get_key_tokens(audio_transcribition)
+    # audio_transcribition = transcribe_and_save(audio_model, video_path)
+    # audio_tokens = get_key_tokens(audio_transcribition)
     frames_descriptions = analyze_video(
         video_path,
         video_model,
@@ -102,7 +102,7 @@ def get_tags(
             + " "
             + description
             + "\n\n"
-            + audio_tokens
+            # + audio_tokens
             + "\n\n"
             + video_description
         )
