@@ -112,7 +112,7 @@ def remove_lower_tags(tags: List[str]) -> List[str]:
 def get_tags(
     engine: Engine,
     encoder_model: SentenceTransformer,
-    audio_model: WhisperModel,
+    # audio_model: WhisperModel,
     video_model,
     video_feature_extractor,
     video_tokenizer,
@@ -121,15 +121,15 @@ def get_tags(
     description: str,
     video_path: str,
 ) -> List[str]:
-    audio_transcribition = transcribe_and_save(audio_model, video_path)
-    audio_tokens = get_key_tokens(audio_transcribition)
+    # audio_transcribition = transcribe_and_save(audio_model, video_path)
+    # audio_tokens = get_key_tokens(audio_transcribition)
     frames_descriptions = analyze_video(
         video_path,
         video_model,
         video_feature_extractor,
         video_tokenizer,
         video_device,
-        {"max_length": 24, "num_beams": 4},
+        {"max_length": 20, "num_beams": 4, "num_return_sequences": 2},
     )
     video_description = "; ".join(frames_descriptions)
     with Session(engine) as session:
@@ -138,8 +138,8 @@ def get_tags(
             + " "
             + description
             + "\n\n"
-            + audio_tokens
-            + "\n\n"
+            # + audio_tokens
+            # + "\n\n"
             + video_description
         )
         tags = session.scalars(
