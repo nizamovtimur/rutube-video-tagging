@@ -95,10 +95,10 @@ def analyze_video(video_path: str, model, feature_extractor, tokenizer, device, 
             if not ret:
                 break
 
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            pil_image = Image.fromarray(frame)
-
             if frame_count % frame_step == 1:
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                resized_image = cv2.resize(frame, (360, 360))
+                pil_image = Image.fromarray(resized_image)
                 images_batch.append(pil_image)
 
             if len(images_batch) == max_workers:
