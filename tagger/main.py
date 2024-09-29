@@ -25,12 +25,12 @@ create_taxonomy(
 
 
 @app.post("/predict_tokens")
-async def predict_tokens(title: str, description, video: UploadFile):
+async def predict_tokens(title: str, description: str, video: UploadFile):
     """Возвращает список тегов для заданноо видео, описания и названия.
 
     Args:
         title (str): название видео;
-        description (_type_): описание видео;
+        description (str): описание видео;
         video (UploadFile): видеофайл.
 
     Raises:
