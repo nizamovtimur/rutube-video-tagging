@@ -23,7 +23,7 @@ services:
         image: rutube-video-tagging/tagger:latest
         container_name: rutube-video-tagging-tagger
         restart: unless-stopped
-        command: sh -c "python database.py && uvicorn main:app --host 0.0.0.0 --port 8000 --log-level warning"
+        command: sh -c "python3.11 database.py && uvicorn main:app --host 0.0.0.0 --port 8000 --log-level warning"
         env_file:
             - .env.docker
         ports:

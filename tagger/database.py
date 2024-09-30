@@ -69,8 +69,8 @@ def get_key_tokens(text: str) -> str:
     Returns:
         str: строка ключевых слов
     """
-    rake_model = Rake(max_words=10)
-    return "; ".join(rake_model.apply(text)[:10])
+    rake_model = Rake(max_words=20)
+    return "; ".join([i[0] for i in rake_model.apply(text)[:20]])
 
 
 def transcribe_and_save(model: WhisperModel, video_path: str) -> str:
@@ -112,7 +112,7 @@ def remove_lower_tags(tags: List[str]) -> List[str]:
 def get_tags(
     engine: Engine,
     encoder_model: SentenceTransformer,
-    # audio_model: WhisperModel,
+    audio_model: WhisperModel,
     video_model,
     video_feature_extractor,
     video_tokenizer,
@@ -121,8 +121,8 @@ def get_tags(
     description: str,
     video_path: str,
 ) -> List[str]:
-    # audio_transcribition = transcribe_and_save(audio_model, video_path)
-    # audio_tokens = get_key_tokens(audio_transcribition)
+    audio_transcribition = transcribe_and_save(audio_model, video_path)
+    audio_tokens = get_key_tokens(audio_transcribition)
     frames_descriptions = analyze_video(
         video_path,
         video_model,
@@ -138,8 +138,8 @@ def get_tags(
             + " "
             + description
             + "\n\n"
-            # + audio_tokens
-            # + "\n\n"
+            + audio_tokens
+            + "\n\n"
             + video_description
         )
         tags = session.scalars(
