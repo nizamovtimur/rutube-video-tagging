@@ -2,8 +2,6 @@ fastapi
 faster-whisper
 multi-rake
 numpy
-nvidia-cublas-cu11
-nvidia-cudnn-cu11
 opencv-python
 pandas
 python-dotenv
@@ -12,4 +10,7 @@ pgvector
 psycopg2-binary
 sentence-transformers
 sqlalchemy
+torch
+torchvision
+torchaudio
 uvicorn

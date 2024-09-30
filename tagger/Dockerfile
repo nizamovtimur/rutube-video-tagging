@@ -1,23 +1,19 @@
-FROM pytorch/pytorch:2.4.1-cuda12.4-cudnn9-runtime
+FROM nvidia/cuda:12.2.2-cudnn8-runtime-ubuntu22.04
+
+RUN apt-get update && \
+    apt-get install -y curl software-properties-common && \
+    add-apt-repository ppa:deadsnakes/ppa && \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get -y install python3.11 python3.11-dev gcc g++ python3-opencv && \
+    curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11
 
 WORKDIR /usr/src/app
-
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-
-RUN apt-get update && apt-get install -y gcc g++ python3-opencv
 
 RUN pip install --upgrade pip
 COPY ./requirements.txt .
 RUN pip install -r requirements.txt
 
 COPY ./model_load.py .
-RUN python model_load.py
+RUN python3.11 model_load.py
 
 COPY . /usr/src/app/
-
-RUN mkdir -p /usr/src/app/uploads
-
-RUN chmod 755 /usr/src/app/uploads
-
-CMD sh -s "python database.py && uvicorn main:app --host 0.0.0.0 --port 8000 --log-level warning"

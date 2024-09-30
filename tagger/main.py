@@ -15,7 +15,7 @@ encoder_model = SentenceTransformer(
     "saved_models/multilingual-e5-large-videotags", device=device
 )
 # TODO: move downloading to build stage
-# audio_model = WhisperModel("small", compute_type="int8", device=device)
+audio_model = WhisperModel("small", compute_type="int8", device=device)
 video_model, video_feature_extractor, video_tokenizer, video_device = (
     load_model_and_processors(device=device)
 )
@@ -50,7 +50,7 @@ async def predict_tokens(title: str, description: str, video: UploadFile):
     return get_tags(
         engine=engine,
         encoder_model=encoder_model,
-        # audio_model=audio_model,
+        audio_model=audio_model,
         video_model=video_model,
         video_feature_extractor=video_feature_extractor,
         video_tokenizer=video_tokenizer,
