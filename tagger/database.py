@@ -129,7 +129,7 @@ def get_tags(
         video_feature_extractor,
         video_tokenizer,
         video_device,
-        {"max_length": 20, "num_beams": 4, "num_return_sequences": 2},
+        {"max_length": 16, "num_beams": 4, "num_return_sequences": 1},
     )
     video_description = "; ".join(frames_descriptions)
     with Session(engine) as session:

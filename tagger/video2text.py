@@ -1,11 +1,27 @@
-import cv2
-import torch
-from transformers import VisionEncoderDecoderModel, ViTImageProcessor, AutoTokenizer
+from cv2 import (
+    resize,
+    VideoCapture,
+    CAP_PROP_POS_FRAMES,
+    CAP_PROP_FRAME_COUNT,
+    CAP_PROP_FPS,
+    cvtColor,
+    COLOR_BGR2RGB,
+)
+from torch import device as Device
+from torch import no_grad
+from transformers import (
+    VisionEncoderDecoderModel,
+    ViTImageProcessor,
+    AutoTokenizer,
+)
 from PIL import Image
-import numpy as np
+from numpy import log
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
-def calculate_frame_step(x, a=6.64, b=0.01, c=130):
+def calculate_frame_step(
+    x: int, a: float = 6.64, b: float = 0.01, c: float = 130
+) -> int:
     """Определяет шаг между кадрами в зависимости от длины видео.
 
     Args:
@@ -17,10 +33,10 @@ def calculate_frame_step(x, a=6.64, b=0.01, c=130):
     Returns:
         int: шаг между кадрами
     """
-    return int(a * np.log(b * (x + c)))
+    return int(a * log(b * (x + c)))
 
 
-def load_model_and_processors(device: str):
+def load_model_and_processors(device_name: str):
     """Инициализирует модель для анализа видеоряда.
 
     Returns:
@@ -33,12 +49,12 @@ def load_model_and_processors(device: str):
         "saved_models/vit-gpt2-image-captioning"
     )
     tokenizer = AutoTokenizer.from_pretrained("saved_models/vit-gpt2-image-captioning")
-    device = torch.device(device)
+    device = Device(device_name)
     model.to(device)
     return model, feature_extractor, tokenizer, device
 
 
-def predict_step(image, model, feature_extractor, tokenizer, device, gen_kwargs):
+def predict_step(images, model, feature_extractor, tokenizer, device, gen_kwargs):
     """Генерирует описание для текущего изображения при помощи модели.
 
     Args:
@@ -52,19 +68,26 @@ def predict_step(image, model, feature_extractor, tokenizer, device, gen_kwargs)
     Returns:
         str: Текстовое описание текущего изображения
     """
-    if image.mode != "RGB":
-        image = image.convert(mode="RGB")
 
-    pixel_values = feature_extractor(images=[image], return_tensors="pt").pixel_values
+    pixel_values = feature_extractor(images=images, return_tensors="pt").pixel_values
     pixel_values = pixel_values.to(device)
 
-    output_ids = model.generate(pixel_values, **gen_kwargs)
+    with no_grad():
+        output_ids = model.generate(pixel_values, **gen_kwargs)
+
     preds = tokenizer.batch_decode(output_ids, skip_special_tokens=True)
+    return preds
 
-    return preds[0].strip()
 
-
-def analyze_video(video_path, model, feature_extractor, tokenizer, device, gen_kwargs):
+def analyze_video(
+    video_path: str,
+    model,
+    feature_extractor,
+    tokenizer,
+    device,
+    gen_kwargs,
+    max_workers=8,
+):
     """Анализирует видео путём генерирования описания для выбранных кадров
 
     Args:
@@ -73,34 +96,68 @@ def analyze_video(video_path, model, feature_extractor, tokenizer, device, gen_k
         feature_extractor (ViTImageProcessor): модель анализа изображений;
         tokenizer (GPT2TokenizerFast): модель генерации аннотаций;
         device (Device): устройство, производящее расчеты;
-        gen_kwargs (dict[str, int]): параметры, передаваемые в метод генерации.
+        gen_kwargs (dict[str, int]): параметры, передаваемые в метод генерации;
+        max_workers (int): количество обработчиков.
 
     Returns:
         list[str]: Список описаний проанализированных кадров
     """
-    cap = cv2.VideoCapture(video_path)
+    cap = VideoCapture(video_path)
     frame_count = 0
     descriptions = []
     frame_step = 1
 
-    video_length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) / cap.get(cv2.CAP_PROP_FPS))
-    frame_step = calculate_frame_step(video_length)
+    fps = cap.get(CAP_PROP_FPS)
+    video_length = cap.get(CAP_PROP_FRAME_COUNT)
+    frame_step = int(fps * calculate_frame_step(int(video_length / fps)))
 
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if not ret:
-            break
+    images_batch = []
+    futures = []
 
-        if frame_count % frame_step == 1:
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            resized_image = cv2.resize(frame, (360, 360))
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        while frame_count < video_length:
+            # Устанавливаем позицию кадра
+            cap.set(CAP_PROP_POS_FRAMES, frame_count)
+
+            ret, frame = cap.read()
+            frame = cvtColor(frame, COLOR_BGR2RGB)
+            resized_image = resize(frame, (360, 360))
             pil_image = Image.fromarray(resized_image)
-            description = predict_step(
-                pil_image, model, feature_extractor, tokenizer, device, gen_kwargs
-            )
-            descriptions.append(description)
+            images_batch.append(pil_image)
 
-        frame_count += 1
+            # Если достигли максимального размера батча, отправляем на обработку
+            if len(images_batch) == max_workers:
+                futures.append(
+                    executor.submit(
+                        predict_step,
+                        images_batch,
+                        model,
+                        feature_extractor,
+                        tokenizer,
+                        device,
+                        gen_kwargs,
+                    )
+                )
+                images_batch = []
+
+            frame_count += frame_step + 1  # Пропускаем к следующему нужному кадру
+
+        # Обработка оставшихся изображений
+        if images_batch:
+            futures.append(
+                executor.submit(
+                    predict_step,
+                    images_batch,
+                    model,
+                    feature_extractor,
+                    tokenizer,
+                    device,
+                    gen_kwargs,
+                )
+            )
+
+        for future in as_completed(futures):
+            descriptions.extend(future.result())
 
     cap.release()
     return descriptions
