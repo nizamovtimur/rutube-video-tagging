@@ -10,3 +10,4 @@ cache
 node_modules
 database*.csv
 videos/
+.DS_Store
