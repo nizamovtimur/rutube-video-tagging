@@ -14,10 +14,13 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 encoder_model = SentenceTransformer(
     "saved_models/multilingual-e5-large-videotags", device=device
 )
-# TODO: move downloading to build stage
-audio_model = WhisperModel("small", compute_type="int8", device=device)
+audio_model = WhisperModel(
+    "saved_models/faster-whisper-small",
+    compute_type="int8",
+    device=device,
+)
 video_model, video_feature_extractor, video_tokenizer, video_device = (
-    load_model_and_processors(device=device)
+    load_model_and_processors(device_name=device)
 )
 engine = create_engine(Config.SQLALCHEMY_DATABASE_URI)
 create_taxonomy(
