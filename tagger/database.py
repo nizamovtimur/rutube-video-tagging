@@ -87,7 +87,12 @@ def transcribe_and_save(model: WhisperModel, video_path: str) -> str:
         audio=video_path,
         word_timestamps=False,
         condition_on_previous_text=False,
-        vad_filter=True,
+        vad_filter=False,
+        beam_size=2,
+        best_of=2,
+        no_speech_threshold=0.7,
+        without_timestamps=True,
+        chunk_length=25
     )
     return "".join(segment.text for segment in segments_n)
 
